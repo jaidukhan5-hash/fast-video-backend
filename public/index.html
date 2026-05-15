@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Pro Video Downloader</title>
 
 <style>
@@ -25,18 +24,8 @@ body{
   border-radius:20px;
   width:90%;
   max-width:450px;
-  box-shadow:0 0 20px rgba(0,0,0,0.5);
   text-align:center;
-}
-
-h1{
-  font-size:24px;
-  margin-bottom:10px;
-}
-
-p{
-  color:#9ca3af;
-  font-size:14px;
+  box-shadow:0 0 20px rgba(0,0,0,0.5);
 }
 
 input{
@@ -45,7 +34,6 @@ input{
   margin-top:20px;
   border:none;
   border-radius:12px;
-  outline:none;
   background:#1f2937;
   color:white;
 }
@@ -53,32 +41,31 @@ input{
 button{
   width:100%;
   padding:14px;
-  margin-top:15px;
+  margin-top:12px;
   border:none;
   border-radius:12px;
   background:linear-gradient(135deg,#6366f1,#22c55e);
   color:white;
   font-weight:bold;
   cursor:pointer;
-  transition:0.2s;
-}
-
-button:hover{
-  transform:scale(1.03);
 }
 
 #msg{
   margin-top:15px;
-  font-size:14px;
-  color:#d1d5db;
 }
 
-.bad{
-  color:#ef4444;
-}
+.bad{color:#ef4444;}
+.good{color:#22c55e;}
 
-.good{
-  color:#22c55e;
+.qualityBtn{
+  margin-top:10px;
+  padding:10px;
+  background:#374151;
+  border:none;
+  border-radius:10px;
+  color:white;
+  cursor:pointer;
+  width:100%;
 }
 
 </style>
@@ -89,12 +76,11 @@ button:hover{
 
 <div class="card">
 
-  <h1>🚀 Pro Video Downloader</h1>
-  <p>YouTube • Instagram • Pinterest</p>
+  <h1>🚀 Video Downloader</h1>
 
-  <input id="url" placeholder="Paste video URL here">
+  <input id="url" placeholder="Paste Instagram / Pinterest / YouTube link">
 
-  <button onclick="downloadVideo()">Download Now</button>
+  <button onclick="downloadVideo()">Get Video</button>
 
   <div id="msg"></div>
 
@@ -108,12 +94,12 @@ async function downloadVideo(){
   const msg = document.getElementById("msg");
 
   if(!url){
-    msg.innerText = "❌ Please enter URL";
+    msg.innerText = "❌ Enter URL";
     msg.className = "bad";
     return;
   }
 
-  msg.innerText = "⏳ Processing...";
+  msg.innerText = "⏳ Fetching formats...";
   msg.className = "";
 
   try{
@@ -128,37 +114,40 @@ async function downloadVideo(){
 
     const data = await res.json();
 
-    if(data.success){
-
-      msg.innerHTML = `
-        ✅ Ready! Click download button below
-        <br><br>
-        <button id="dlBtn">⬇ Download Video</button>
-      `;
-
-      msg.className = "good";
-
-      document.getElementById("dlBtn").onclick = function(){
-
-        const a = document.createElement("a");
-        a.href = data.videoUrl;
-        a.download = "video.mp4";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-      };
-
-    } else {
+    if(!data.success){
       msg.innerText = "❌ " + data.error;
       msg.className = "bad";
+      return;
     }
+
+    let html = `<h3>Choose Quality</h3>`;
+
+    data.formats.forEach(f => {
+      html += `
+        <button class="qualityBtn" onclick="downloadFile('${f.url}')">
+          ⬇ ${f.quality}
+        </button>
+      `;
+    });
+
+    msg.innerHTML = html;
+    msg.className = "good";
 
   }catch(err){
     msg.innerText = "❌ Server error";
     msg.className = "bad";
   }
 
+}
+
+function downloadFile(fileUrl){
+
+  const a = document.createElement("a");
+  a.href = fileUrl;
+  a.download = "video.mp4";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 </script>
