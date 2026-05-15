@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { exec } from "child_process";
+import ytdlp from "yt-dlp-exec";
 
 const app = express();
 
@@ -11,7 +11,7 @@ app.get("/", (req, res) => {
   res.send("Downloader Running 🚀");
 });
 
-app.post("/download", (req, res) => {
+app.post("/download", async (req, res) => {
   try {
     const { url } = req.body;
 
@@ -22,45 +22,30 @@ app.post("/download", (req, res) => {
       });
     }
 
-    // safe filename
-    const cmd = `yt-dlp -j "${url}"`;
+    const info = await ytdlp(url, {
+      dumpSingleJson: true,
+      noWarnings: true,
+      noCheckCertificates: true
+    });
 
-    exec(cmd, (error, stdout, stderr) => {
-      if (error) {
-        return res.status(500).json({
-          success: false,
-          error: "yt-dlp failed",
-          details: error.message
-        });
-      }
+    const formats = (info.formats || [])
+      .filter(f => f.url && f.height)
+      .map(f => ({
+        quality: `${f.height}p`,
+        url: f.url
+      }));
 
-      try {
-        const info = JSON.parse(stdout);
-
-        const formats = (info.formats || [])
-          .filter(f => f.url && f.height)
-          .map(f => ({
-            quality: `${f.height}p`,
-            url: f.url
-          }));
-
-        return res.json({
-          success: true,
-          title: info.title,
-          thumbnail: info.thumbnail,
-          formats
-        });
-
-      } catch (e) {
-        return res.status(500).json({
-          success: false,
-          error: "Parse error"
-        });
-      }
+    return res.json({
+      success: true,
+      title: info.title,
+      thumbnail: info.thumbnail,
+      formats
     });
 
   } catch (err) {
-    res.status(500).json({
+    console.error(err);
+
+    return res.status(500).json({
       success: false,
       error: err.message
     });
@@ -68,7 +53,6 @@ app.post("/download", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log("Server running on", PORT);
 });
