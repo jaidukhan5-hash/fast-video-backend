@@ -1,80 +1,65 @@
 import express from "express";
 import cors from "cors";
 import ytdlp from "yt-dlp-exec";
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 
-// simple cache for speed
-const cache = new Map();
+const tempDir = "./temp";
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir);
+}
 
 app.get("/", (req, res) => {
-  res.send("Video Downloader Backend Running");
+  res.send("Video Downloader Running 🚀");
 });
 
 app.post("/download", async (req, res) => {
   try {
-
     const { url } = req.body;
 
     if (!url) {
-      return res.status(400).json({
-        success: false,
-        error: "URL required"
-      });
+      return res.status(400).json({ success: false, error: "URL missing" });
     }
 
-    // CACHE
-    if (cache.has(url)) {
-      return res.json(cache.get(url));
-    }
+    const fileId = uuidv4();
+    const outputPath = path.join(tempDir, `${fileId}.mp4`);
 
-    const info = await ytdlp(url, {
-      dumpSingleJson: true,
-      noWarnings: true,
-      noCheckCertificates: true
+    await ytdlp(url, {
+      // 🔥 AUDIO FIX MAIN CHANGE HERE
+      format: "best[ext=mp4]/best",
+
+      output: outputPath,
+      noPlaylist: true,
+
+      // fallback stability
+      noCheckCertificates: true,
+      preferFreeFormats: true
     });
 
-    const formats = (info.formats || [])
-      .filter(f => f.url && f.height)
-      .map(f => ({
-        quality: f.height + "p",
-        url: f.url
-      }));
-
-    if (formats.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: "No video formats found"
-      });
-    }
-
-    // AUTO BEST QUALITY
-    const best = formats.reduce((a, b) =>
-      parseInt(a.quality) > parseInt(b.quality) ? a : b
-    );
-
-    const response = {
-      success: true,
-      title: info.title,
-      thumbnail: info.thumbnail,
-      bestQuality: best,
-      formats: formats
-    };
-
-    cache.set(url, response);
-
-    return res.json(response);
+    res.download(outputPath, (err) => {
+      if (fs.existsSync(outputPath)) {
+        fs.unlinkSync(outputPath);
+      }
+    });
 
   } catch (err) {
-    return res.status(500).json({
+    console.error(err);
+
+    res.status(500).json({
       success: false,
-      error: err.message
+      error: "Download failed",
+      details: err.message
     });
   }
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log("Server running on", PORT));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
