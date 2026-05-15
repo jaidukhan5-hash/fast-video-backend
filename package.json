@@ -1,15 +1,14 @@
 {
-  "name": "fast-video-backend",
+  "name": "video-downloader",
   "version": "1.0.0",
-  "description": "Video downloader backend",
   "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "cors": "^2.8.5",
     "express": "^4.19.2",
+    "cors": "^2.8.5",
     "yt-dlp-exec": "^1.0.2"
   }
 }
