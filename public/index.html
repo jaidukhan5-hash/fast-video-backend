@@ -129,10 +129,25 @@ async function downloadVideo(){
     const data = await res.json();
 
     if(data.success){
-      msg.innerText = "✅ Opening video...";
+
+      msg.innerHTML = `
+        ✅ Ready! Click download button below
+        <br><br>
+        <button id="dlBtn">⬇ Download Video</button>
+      `;
+
       msg.className = "good";
 
-      window.open(data.videoUrl, "_blank");
+      document.getElementById("dlBtn").onclick = function(){
+
+        const a = document.createElement("a");
+        a.href = data.videoUrl;
+        a.download = "video.mp4";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+      };
 
     } else {
       msg.innerText = "❌ " + data.error;
