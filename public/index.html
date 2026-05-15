@@ -1,40 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Fast Video Saver</title>
+  <title>Video Downloader</title>
 </head>
-<body style="font-family:Arial;text-align:center;padding:50px">
+<body style="font-family:Arial;text-align:center;padding:40px">
 
-  <h1>Fast Video Saver 🚀</h1>
+<h1>🔥 Video Downloader</h1>
 
-  <input id="url" placeholder="Paste video URL" style="padding:10px;width:300px">
-  <button onclick="download()">Download</button>
+<input id="url" placeholder="Paste Instagram / Pinterest / YouTube URL"
+style="padding:10px;width:320px">
 
-  <p id="msg"></p>
+<br><br>
 
-  <script>
-    async function download(){
-      const url = document.getElementById('url').value;
-      const msg = document.getElementById('msg');
+<button onclick="download()" style="padding:10px 20px">
+Download
+</button>
 
-      msg.innerText = "Processing...";
+<p id="msg"></p>
 
-      const res = await fetch('/download',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({url})
-      });
+<script>
+async function download(){
+  const url = document.getElementById("url").value;
+  const msg = document.getElementById("msg");
 
-      const data = await res.json();
+  msg.innerText = "Processing...";
 
-      if(data.success){
-        msg.innerText = "Opening video...";
-        window.open(data.videoUrl,'_blank');
-      } else {
-        msg.innerText = data.error;
-      }
+  try {
+    const res = await fetch("https://fast-video-backend.onrender.com/download", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({url})
+    });
+
+    const data = await res.json();
+
+    if(data.success){
+      msg.innerText = "Opening video...";
+      window.open(data.videoUrl, "_blank");
+    } else {
+      msg.innerText = data.error;
     }
-  </script>
+
+  } catch(e){
+    msg.innerText = "Server error";
+  }
+}
+</script>
 
 </body>
 </html>
