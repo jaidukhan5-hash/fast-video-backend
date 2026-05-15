@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pro Video Downloader</title>
+
+<title>My Video Saver</title>
 
 <style>
 
 body{
   margin:0;
   font-family:Arial;
-  background: linear-gradient(135deg,#0f172a,#1e293b);
+  background:#0b1220;
   color:white;
   display:flex;
   justify-content:center;
@@ -19,21 +20,27 @@ body{
 }
 
 .card{
-  background:#111827;
-  padding:30px;
-  border-radius:20px;
   width:90%;
-  max-width:450px;
+  max-width:520px;
+  background:#111827;
+  padding:25px;
+  border-radius:18px;
   text-align:center;
-  box-shadow:0 0 20px rgba(0,0,0,0.5);
+  box-shadow:0 0 25px rgba(0,0,0,0.6);
+}
+
+.logo{
+  width:60px;
+  height:60px;
+  border-radius:50%;
 }
 
 input{
   width:100%;
   padding:14px;
-  margin-top:20px;
   border:none;
   border-radius:12px;
+  margin-top:15px;
   background:#1f2937;
   color:white;
 }
@@ -41,7 +48,7 @@ input{
 button{
   width:100%;
   padding:14px;
-  margin-top:12px;
+  margin-top:10px;
   border:none;
   border-radius:12px;
   background:linear-gradient(135deg,#6366f1,#22c55e);
@@ -54,18 +61,42 @@ button{
   margin-top:15px;
 }
 
+.thumb{
+  width:100%;
+  border-radius:12px;
+  margin-top:15px;
+}
+
+.qbtn{
+  width:100%;
+  margin-top:8px;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background:#374151;
+  color:white;
+  cursor:pointer;
+}
+
+.qbtn:hover{
+  background:#4b5563;
+}
+
 .bad{color:#ef4444;}
 .good{color:#22c55e;}
 
-.qualityBtn{
-  margin-top:10px;
-  padding:10px;
-  background:#374151;
-  border:none;
-  border-radius:10px;
-  color:white;
-  cursor:pointer;
+.progress{
   width:100%;
+  background:#333;
+  border-radius:10px;
+  margin-top:10px;
+}
+
+.bar{
+  height:8px;
+  width:0%;
+  background:lime;
+  border-radius:10px;
 }
 
 </style>
@@ -76,11 +107,13 @@ button{
 
 <div class="card">
 
-  <h1>🚀 Video Downloader</h1>
+  <img class="logo" src="https://i.imgur.com/8Km9tLL.png">
 
-  <input id="url" placeholder="Paste Instagram / Pinterest / YouTube link">
+  <h1>My Video Saver</h1>
 
-  <button onclick="downloadVideo()">Get Video</button>
+  <input id="url" placeholder="Paste Instagram / YouTube / Pinterest link">
+
+  <button onclick="getVideo()">Fetch Video</button>
 
   <div id="msg"></div>
 
@@ -88,27 +121,43 @@ button{
 
 <script>
 
-async function downloadVideo(){
+function progressBar(msg){
+
+  let p = 0;
+
+  msg.innerHTML = `
+    ⏳ Processing... ${p}%
+    <div class="progress"><div class="bar" id="bar"></div></div>
+  `;
+
+  const interval = setInterval(() => {
+    p += 10;
+
+    document.getElementById("bar").style.width = p + "%";
+
+    if(p >= 100) clearInterval(interval);
+
+  }, 150);
+
+}
+
+async function getVideo(){
 
   const url = document.getElementById("url").value;
   const msg = document.getElementById("msg");
 
   if(!url){
     msg.innerText = "❌ Enter URL";
-    msg.className = "bad";
     return;
   }
 
-  msg.innerText = "⏳ Fetching formats...";
-  msg.className = "";
+  progressBar(msg);
 
   try{
 
     const res = await fetch("https://fast-video-backend.onrender.com/download",{
       method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
+      headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ url })
     });
 
@@ -116,38 +165,60 @@ async function downloadVideo(){
 
     if(!data.success){
       msg.innerText = "❌ " + data.error;
-      msg.className = "bad";
       return;
     }
 
-    let html = `<h3>Choose Quality</h3>`;
+    let html = "";
+
+    if(data.thumbnail){
+      html += `<img class="thumb" src="${data.thumbnail}">`;
+    }
+
+    html += `<h3>${data.title}</h3>`;
+
+    html += `
+      <button onclick="downloadFile('${data.bestQuality.url}')">
+        ⬇ Download Best (${data.bestQuality.quality})
+      </button>
+
+      <h4>More Qualities</h4>
+    `;
 
     data.formats.forEach(f => {
       html += `
-        <button class="qualityBtn" onclick="downloadFile('${f.url}')">
-          ⬇ ${f.quality}
+        <button class="qbtn" onclick="downloadFile('${f.url}')">
+          ${f.quality}
         </button>
       `;
     });
 
+    html += `
+      <br><br>
+      <button onclick="window.open('https://wa.me/?text='+encodeURIComponent('${url}'))">
+        Share WhatsApp
+      </button>
+
+      <button onclick="window.open('https://t.me/share/url?url='+encodeURIComponent('${url}'))">
+        Share Telegram
+      </button>
+    `;
+
     msg.innerHTML = html;
-    msg.className = "good";
 
   }catch(err){
-    msg.innerText = "❌ Server error";
-    msg.className = "bad";
+    msg.innerText = "Server error";
   }
-
 }
 
-function downloadFile(fileUrl){
+function downloadFile(url){
 
   const a = document.createElement("a");
-  a.href = fileUrl;
+  a.href = url;
   a.download = "video.mp4";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+
 }
 
 </script>
