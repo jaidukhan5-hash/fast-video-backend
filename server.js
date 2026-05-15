@@ -14,6 +14,7 @@ app.get("/", (req, res) => {
 
 app.post("/download", async (req, res) => {
   try {
+
     const { url } = req.body;
 
     if (!url) {
@@ -23,34 +24,35 @@ app.post("/download", async (req, res) => {
       });
     }
 
-    // yt-dlp extraction
+    // Get full video info
     const info = await ytdlp(url, {
       dumpSingleJson: true,
       noWarnings: true,
-      noCheckCertificates: true,
-      preferFreeFormats: true
+      noCheckCertificates: true
     });
 
-    // best format selection
     const formats = info.formats || [];
 
-    const best = formats
-      .filter(f => f.url && f.ext === "mp4")
-      .sort((a, b) => (b.height || 0) - (a.height || 0))[0];
+    // Filter usable formats
+    const cleanFormats = formats
+      .filter(f => f.url && f.height)
+      .map(f => ({
+        quality: f.height + "p",
+        url: f.url
+      }));
 
-    if (!best) {
+    if (cleanFormats.length === 0) {
       return res.status(400).json({
         success: false,
-        error: "No downloadable format found"
+        error: "No downloadable formats found"
       });
     }
 
     return res.json({
       success: true,
       title: info.title,
-      platform: info.extractor,
       thumbnail: info.thumbnail,
-      videoUrl: best.url
+      formats: cleanFormats
     });
 
   } catch (err) {
