@@ -1,50 +1,151 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Video Downloader</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Pro Video Downloader</title>
+
+<style>
+
+body{
+  margin:0;
+  font-family:Arial;
+  background: linear-gradient(135deg,#0f172a,#1e293b);
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+
+.card{
+  background:#111827;
+  padding:30px;
+  border-radius:20px;
+  width:90%;
+  max-width:450px;
+  box-shadow:0 0 20px rgba(0,0,0,0.5);
+  text-align:center;
+}
+
+h1{
+  font-size:24px;
+  margin-bottom:10px;
+}
+
+p{
+  color:#9ca3af;
+  font-size:14px;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  margin-top:20px;
+  border:none;
+  border-radius:12px;
+  outline:none;
+  background:#1f2937;
+  color:white;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  margin-top:15px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#6366f1,#22c55e);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+button:hover{
+  transform:scale(1.03);
+}
+
+#msg{
+  margin-top:15px;
+  font-size:14px;
+  color:#d1d5db;
+}
+
+.bad{
+  color:#ef4444;
+}
+
+.good{
+  color:#22c55e;
+}
+
+</style>
+
 </head>
-<body style="font-family:Arial;text-align:center;padding:40px">
 
-<h1>🔥 Video Downloader</h1>
+<body>
 
-<input id="url" placeholder="Paste Instagram / Pinterest / YouTube URL"
-style="padding:10px;width:320px">
+<div class="card">
 
-<br><br>
+  <h1>🚀 Pro Video Downloader</h1>
+  <p>YouTube • Instagram • Pinterest</p>
 
-<button onclick="download()" style="padding:10px 20px">
-Download
-</button>
+  <input id="url" placeholder="Paste video URL here">
 
-<p id="msg"></p>
+  <button onclick="downloadVideo()">Download Now</button>
+
+  <div id="msg"></div>
+
+</div>
 
 <script>
-async function download(){
+
+async function downloadVideo(){
+
   const url = document.getElementById("url").value;
   const msg = document.getElementById("msg");
 
-  msg.innerText = "Processing...";
+  if(!url){
+    msg.innerText = "❌ Please enter URL";
+    msg.className = "bad";
+    return;
+  }
 
-  try {
-    const res = await fetch("https://fast-video-backend.onrender.com/download", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({url})
+  msg.innerText = "⏳ Processing...";
+  msg.className = "";
+
+  try{
+
+    const res = await fetch("https://fast-video-backend.onrender.com/download",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({ url })
     });
 
     const data = await res.json();
 
     if(data.success){
-      msg.innerText = "Opening video...";
+      msg.innerText = "✅ Opening video...";
+      msg.className = "good";
+
       window.open(data.videoUrl, "_blank");
+
     } else {
-      msg.innerText = data.error;
+      msg.innerText = "❌ " + data.error;
+      msg.className = "bad";
     }
 
-  } catch(e){
-    msg.innerText = "Server error";
+  }catch(err){
+    msg.innerText = "❌ Server error";
+    msg.className = "bad";
   }
+
 }
+
 </script>
 
 </body>
